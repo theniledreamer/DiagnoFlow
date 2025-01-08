@@ -1,11 +1,29 @@
 <script>
+    import { uploadDocument,PatientData } from '../api/db.js';
     let ascensionNumber = "";
     let selectedTest = "";
     let patientData = [];
     let currentAscension = "";
   
     const testTypes = ["ABR", "Mini RPP", "STI", "UTI", "RPP"];
-  
+    async function uploadPatients() {
+        if (patientData.length === 0) {
+            alert('No patients to upload.');
+            return;
+        }
+
+        for (const patient of patientData) {
+            try {
+                console.log(patient)
+                const prep = {"asc_number":patient.ascensionNumber,"test_type":patient.testType,"date":new Date().toISOString().split('T')[0]}
+                console.log(prep)
+            } catch (err) {
+                console.error(`An error occurred while uploading patient ${patient.ascensionNumber}:`, err.message);
+            }
+        }
+
+        alert('Patient upload process completed.');
+    }
     const addPatient = () => {
       if (ascensionNumber.trim() === "") {
         alert("Please enter an ascension number.");
@@ -165,6 +183,7 @@
   </style>
   
   <main>
+    
     <!-- Left Pane: Data Entry -->
     <div class="left-pane">
       <h1>Data Entry</h1>
@@ -220,12 +239,15 @@
               </button>
             </div>
           {/each}
-          <button class="submit-button" on:click={saveTestType}>Generate Extraction File</button>
+          <button class="submit-button" on:click={uploadPatients()}>Upload Patients</button>
 
         </div>
       {:else}
         <p class="no-data">No patients added yet.</p>
       {/if}
     </div>
+    <script>
+        
+    </script>
   </main>
   
