@@ -1,59 +1,57 @@
-import mongoose from 'mongoose';
+import { MongoClient } from 'mongodb';
 
-// MongoDB connection string with database name `patients`
-const uri = "mongodb+srv://anha:qvYgxFlcTC65MWhM@anha.dm2ue.mongodb.net/patients?retryWrites=true&w=majority&appName=ANHA";
+class PatientDB {
+  constructor() {
+    this.uri = "mongodb+srv://anha:qvYgxFlcTC65MWhM@anha.dm2ue.mongodb.net/patients?retryWrites=true&w=majority&appName=ANHA";
+    this.client = new MongoClient(this.uri);
+    this.dbName = 'patients';
+    this.collectionName = 'patient_data';
+  }
 
-// Define the schema
-const patientDataSchema = new mongoose.Schema({
-  asc_number: { type: Number, required: true },
-  test_type: { type: String, required: true },
-  date: { type: Date, default: Date.now }
-});
-
-// Create a model and explicitly set the collection name to `patient_data`
-const PatientData = mongoose.model('PatientData', patientDataSchema, 'patient_data');
-module.exports = PatientData;
-
-
-mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log("Connected to MongoDB"))
-  .catch(err => console.error("Error connecting to MongoDB:", err));
-
-
-  // Function to upload a single document
-async function uploadDocument(doc) {
+  async connectDB() {
     try {
-      const testDoc = new Test(doc);
-      const result = await testDoc.save();
-      console.log("Document uploaded:", result);
+      await this.client.connect();
+      console.log("Connected to MongoDB");
     } catch (error) {
-      console.error("Error uploading document:", error);
+      console.error("Error connecting to MongoDB:", error);
+      throw error;
     }
   }
-  
-// async function main() {
-//   try {
-//     // Connect to the MongoDB cluster
-//     await mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-//     console.log("Connected to MongoDB");
 
-//     // Example: Create a new document
-//     const patientDoc = new PatientData({
-//       asc_number: 1234,
-//       test_type: 'example',
-//       date: new Date()
-//     });
+  async uploadDocument(doc) {
+    try {
+      const db = this.client.db(this.dbName);
+      const collection = db.collection(this.collectionName);
+      const result = await collection.insertOne(doc);
+      console.log("Document uploaded:", result);
+      return result;
+    } catch (error) {
+      console.error("Error uploading document:", error);
+      throw error;
+    }
+  }
 
-//     // Save the document to the database
-//     await patientDoc.save();
-//     console.log("Document saved:", patientDoc);
-//   } catch (error) {
-//     console.error("Error connecting to MongoDB or saving document:", error);
-//   } finally {
-//     // Close the connection to the MongoDB cluster
-//     await mongoose.connection.close();
-//     console.log("Connection closed");
-//   }
-// }
+  async getBatchNumber() {
+    try {
+      const db = this.client.db(this.dbName);
+      const collection = db.collection(this.collectionName);
+      const latestBatch = await collection.find({})
+        .sort({ batchNumber: -1 })
+        .limit(1)
+        .toArray();
 
-// main().catch(console.error);
+      console.log("Query result for latest batch:", latestBatch);
+
+      const latestBatchNumber = latestBatch.length > 0 ? latestBatch[0].batchNumber : 0;
+      console.log("Latest batch number:", latestBatchNumber);
+      return latestBatchNumber;
+    } catch (error) {
+      console.error("Error fetching latest batch number:", error);
+      throw error;
+    }
+  }
+}
+
+
+
+export default PatientDB;
