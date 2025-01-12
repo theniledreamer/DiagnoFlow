@@ -1,5 +1,4 @@
 <script>
-  import PatientDB from '../api/db.js'
   let ascensionNumber = "";
   let selectedTest = "";
   let patientData = [];
@@ -11,9 +10,6 @@
         alert('No patients to upload.');
         return;
     }
-    const db = new PatientDB();
-    await db.connectDB();
-    const batchNumber = await db.getBatchNumber();
     console.log("Batch number:", batchNumber);
 
     console.log(PatientDB.getBatchNumber+1)
@@ -23,11 +19,6 @@
       patients: patientData,
       created_at: Date.now
     }
-
-    
-
-
-
   }
 
   const addPatient = () => {
