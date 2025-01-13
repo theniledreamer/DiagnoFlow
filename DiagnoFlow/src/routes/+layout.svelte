@@ -58,9 +58,8 @@
 
 <nav>
     <a href="/" class="current">Sample Entry</a>
-    <a href="/extraction">Extraction View</a>
-    <a href="/reports">Reports</a>
-    <a href="/settings">Settings</a>
+    <a href="/batches">Batches</a>
+
 </nav>
 
 <main>

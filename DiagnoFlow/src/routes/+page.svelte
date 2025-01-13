@@ -1,23 +1,53 @@
 <script>
   let ascensionNumber = "";
+  let loading = false
   let selectedTest = "";
   let patientData = [];
   let currentAscension = "";
-
   const testTypes = ["ABR", "Mini RPP", "STI", "UTI", "RPP"];
   async function uploadPatients() {
     if (patientData.length === 0) {
         alert('No patients to upload.');
         return;
     }
+    var batchNumber = await getBatchNumber()
     console.log("Batch number:", batchNumber);
 
-    console.log(PatientDB.getBatchNumber+1)
-    console.log(patientData)
     const prep = {
-      batchNumber: batchNumber+ 1,
+      batch_number: batchNumber + 1,
       patients: patientData,
-      created_at: Date.now
+      date: new Date().toISOString().split('T')[0],
+    }
+    var result = createBatch(prep)
+    console.log(prep)
+    console.log(result)
+  };
+
+  async function createBatch(batch) {
+    loading = true
+    var error = null; // Reset error before fetching
+    var responseData = null; // Reset response data
+
+    const apiUrl = 'https://jbib83ig7l.execute-api.us-east-2.amazonaws.com/dev/batches';
+
+    try {
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(batch), // Send the batch object as JSON
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
+      }
+
+      responseData = await response.json(); // Parse the JSON response
+    } catch (err) {
+      error = err.message; // Catch and store any errors
+    } finally {
+      loading = false; // Stop the loading state
     }
   }
 
@@ -44,7 +74,7 @@
 
     patientData = [
       ...patientData,
-      { ascensionNumber: currentAscension, testType: selectedTest },
+      { asc_number: currentAscension, test_type: selectedTest },
     ];
     currentAscension = "";
     selectedTest = "";
@@ -53,7 +83,35 @@
   const deletePatient = (ascensionNumber) => {
     patientData = patientData.filter((patient) => patient.ascensionNumber !== ascensionNumber);
   };
+  async function getBatchNumber() {
+    var loading = true; // Set loading to true while fetching
+    var error = null; // Reset error before fetching
+    var responseData = null; // Reset response data
 
+    const apiUrl = 'https://jbib83ig7l.execute-api.us-east-2.amazonaws.com/dev/batches/latest';
+
+    try {
+      const response = await fetch(apiUrl, {
+        method: 'GET', // Use 'POST' for a POST request
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP Error: ${response.status} - ${response.statusText}`);
+      }
+
+      responseData = await response.json(); // Parse the JSON response
+      console.log(responseData)
+      return(responseData)
+    } catch (err) {
+      error = err.message; // Catch and store any errors
+    } finally {
+      loading = false; // Stop the loading state
+    }
+  }
 </script>
 
 <main>
@@ -102,8 +160,8 @@
         {#each patientData as patient, i}
           <div class="patient-item">
             <div class="patient-info">
-              <strong>{i + 1}. Ascension:</strong> {patient.ascensionNumber}<br />
-              <strong>Test Type:</strong> {patient.testType}
+              <strong>{i + 1}. Ascension:</strong> {patient.asc_number}<br />
+              <strong>Test Type:</strong> {patient.test_type}
             </div>
             <button
               class="delete-button"
