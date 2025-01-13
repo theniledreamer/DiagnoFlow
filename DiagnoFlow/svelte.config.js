@@ -4,7 +4,7 @@ const config = {
   kit: {
     adapter: vercel({
       // options here are optional
-      runtime: 'nodejs18.x' // Ensure this matches Vercel's supported Node.js runtime
+      runtime: 'nodejs20.x' // Ensure this matches Vercel's supported Node.js runtime
     })
   }
 };
