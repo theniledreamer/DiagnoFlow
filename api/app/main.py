@@ -1,6 +1,10 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query, Body
+from . import createTest
 from pydantic import BaseModel, Field
 from typing import List
+from fastapi.responses import StreamingResponse
+import pandas as pd
+import io
 from datetime import date
 from motor.motor_asyncio import AsyncIOMotorClient
 from bson import ObjectId
@@ -120,5 +124,29 @@ async def delete_batch(batch_id: str):
         return {"message": "Batch deleted successfully"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Invalid ID: {e}")
+    
+import json
+@app.post("/test-form/{test_type}")
+async def get_test_form(
+    test_type: str,
+    patientData: List[dict] = Body(..., description="List of patients with test information")
+):
+    try:
+        # Pass the JSON directly to the create_test function
+        df = createTest.create_test(patientData=patientData, testType=test_type)
 
+        # Convert the DataFrame to a CSV format in-memory
+        csv_buffer = io.StringIO()
+        df.to_csv(csv_buffer, index=False)
+        csv_buffer.seek(0)  # Move the buffer pointer to the beginning
+        today_date = datetime.now().strftime("%Y-%m-%d")
+        filename = f"{test_type}_{today_date}.csv"
+        # Return the CSV file as a response
+        return StreamingResponse(
+            csv_buffer,
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
 
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating test form: {e}")
