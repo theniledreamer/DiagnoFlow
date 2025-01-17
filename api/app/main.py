@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Query, Body
 from fastapi.middleware.cors import CORSMiddleware
-from . import createTest
+import createTest
 from pydantic import BaseModel, Field
 from typing import List
 from fastapi.responses import StreamingResponse

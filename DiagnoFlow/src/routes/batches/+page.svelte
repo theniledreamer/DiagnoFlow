@@ -123,6 +123,50 @@ Which section would you like to start with? (1, 2, or 3):`), 10);
     // Call the create96WellPlate function
     create96WellPlate(batch, section).catch(console.error);
 }
+async function generateTestFiles(batch, test_type) {
+  console.log("Batch:", batch, "Test Type:", test_type); // Debugging
+
+  try {
+    // Make the POST request
+    const response = await fetch(`https://jbib83ig7l.execute-api.us-east-2.amazonaws.com/dev/test-form/${test_type}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(batch), // Convert batch data to JSON string
+    });
+
+    // Check for HTTP errors
+    if (!response.ok) {
+      throw new Error(`Error: ${response.status} - ${response.statusText}`);
+    }
+
+    // Extract the filename from the Content-Disposition header
+    const contentDisposition = response.headers.get("Content-Disposition");
+    let filename = `${test_type}.csv`; // Default filename
+    if (contentDisposition) {
+      const match = contentDisposition.match(/filename="?(.+?)"?$/);
+      if (match && match[1]) {
+        filename = match[1];
+      }
+    }
+
+    // Download the file as a Blob
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename; // Use the extracted filename
+    document.body.appendChild(a);
+    a.click(); // Trigger download
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url); // Clean up
+
+    console.log("File downloaded:", filename);
+  } catch (error) {
+    console.error("Error generating test files:", error);
+  }
+}
     onMount(() => {
       fetchBatches();
     });
@@ -160,11 +204,11 @@ Which section would you like to start with? (1, 2, or 3):`), 10);
             {#each Object.entries(groupByTestType(batch.patients)) as [testType, patients]}
               <div class="test-type-unit">
                 <details>
-                  <summary>{testType}</summary>
+                  <summary>{testType} <button on:click={() => generateTestFiles(patients,testType)}>Generate Test Files</button>
+                  </summary>
                   <ul>
                     {#each patients as patient}
                       <li>Ascension Number: {patient.asc_number}</li>
-                      console.log(batch._id)
                     {/each}
                   </ul>
                 </details>
@@ -172,7 +216,6 @@ Which section would you like to start with? (1, 2, or 3):`), 10);
             {/each}
           </details>
           <button on:click={() => generateExtraction(batch)}>Generate Extraction</button>
-          <button on:click={() => generateTestFiles(batch)}>Generate Test Files</button>
         </div>
       {/each}
     {/if}
