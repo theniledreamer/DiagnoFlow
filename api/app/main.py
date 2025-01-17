@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Query, Body
+from fastapi.middleware.cors import CORSMiddleware
 from . import createTest
 from pydantic import BaseModel, Field
 from typing import List
@@ -12,8 +13,16 @@ import os
 from datetime import date, datetime
 from typing import List
 from pydantic import BaseModel, Field
+from mangum import Mangum
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # List of allowed origins. Use ["*"] to allow all.
+    allow_credentials=True,
+    allow_methods=["*"],  # List of allowed methods (e.g., ["GET", "POST"]).
+    allow_headers=["*"],  # List of allowed headers (e.g., ["Authorization", "Content-Type"]).
+)
 
 # MongoDB configuration
 MONGO_URI = "mongodb+srv://ashahindev:0isIpHZ7PZtoSrFG@patientdata.4cocs.mongodb.net/?retryWrites=true&w=majority&appName=PatientData"
@@ -150,3 +159,5 @@ async def get_test_form(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating test form: {e}")
+
+handler = Mangum(app)
